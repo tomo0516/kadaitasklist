@@ -2,6 +2,7 @@ package controllers;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.servlet.ServletException;
@@ -11,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import models.Task;
+import models.validators.TaskValidator;
 import utils.DBUtil;
 
 /**
@@ -48,6 +50,17 @@ public class CreateServlet extends HttpServlet {
             t.setCreated_at(currentTime);
             t.setUpdated_at(currentTime);
 
+
+            List<String> errors = TaskValidator.validate(t);
+            if(errors.size() > 0) {
+                em.close();
+
+                // フォームに初期値を設定、さらにエラーメッセージを送る
+                request.setAttribute("_token", request.getSession().getId());
+                request.setAttribute("message", t);
+                request.setAttribute("errors", errors);
+            }else{
+
             em.getTransaction().begin();
             em.persist(t);
             em.getTransaction().commit();
@@ -55,7 +68,7 @@ public class CreateServlet extends HttpServlet {
             em.close();
 
             response.sendRedirect(request.getContextPath() + "/index");
+            }
         }
     }
-
 }
